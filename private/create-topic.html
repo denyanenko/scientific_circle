@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Створення гуртка</title>
+
+    <!-- CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+
+</head>
+<body class="bg-light">
+
+<!-- JS libs -->
+<script src="js/layout.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/quill-blot-formatter@1.0.0/dist/quill-blot-formatter.min.js"></script>
+
+<main class="container my-5">
+    <div class="mx-auto p-4 rounded-4 shadow bg-white w-100" style="max-width: 1000px;">
+        <h1 class="mb-4 text-center">🔬 Створення гуртка</h1>
+        <form id="topic-form" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="topicTitle" class="form-label fw-semibold">📝 Назва</label>
+                <input type="text" class="form-control" id="topicTitle" name="topicTitle" placeholder="Введіть назву теми..." required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold">👨‍🏫 Оберіть менторів</label>
+                <br>
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#mentorModal">
+                    Вибрати менторів
+                </button>
+                <div id="selectedMentors" class="mt-2 text-muted small"></div>
+            </div>
+            <label class="form-label fw-semibold mb-2">📄 Опис гуртка</label>
+            <div id="toolbar-container" class="mb-2">
+        <span class="ql-formats">
+          <select class="ql-size"></select>
+        </span>
+                <span class="ql-formats">
+          <button class="ql-bold"></button>
+          <button class="ql-italic"></button>
+          <button class="ql-underline"></button>
+          <button class="ql-strike"></button>
+        </span>
+                <span class="ql-formats">
+          <select class="ql-color"></select>
+          <select class="ql-background"></select>
+        </span>
+                <span class="ql-formats">
+          <button class="ql-script" value="sub"></button>
+          <button class="ql-script" value="super"></button>
+        </span>
+                <span class="ql-formats">
+          <button class="ql-blockquote"></button>
+          <button class="ql-code-block"></button>
+        </span>
+                <span class="ql-formats">
+          <button class="ql-list" value="ordered"></button>
+          <button class="ql-list" value="bullet"></button>
+          <button class="ql-indent" value="-1"></button>
+          <button class="ql-indent" value="+1"></button>
+        </span>
+                <span class="ql-formats">
+          <button class="ql-direction" value="rtl"></button>
+          <select class="ql-align"></select>
+        </span>
+                <span class="ql-formats">
+          <button class="ql-link"></button>
+          <button class="ql-image"></button>
+          <button class="ql-video"></button>
+          <button class="ql-formula"></button>
+        </span>
+            </div>
+            <div id="editor" style="min-height: 250px;"></div>
+
+            <div class="text-end mt-4">
+                <button type="submit" class="btn btn-success px-4">💾 Зберегти</button>
+            </div>
+        </form>
+        <div class="modal fade" id="mentorModal" tabindex="-1" aria-labelledby="mentorModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="mentorModalLabel">Вибір менторів</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+                    </div>
+                    <div class="modal-body" style="max-height: 300px; overflow-y: auto;">
+                        <div id="mentorChecklist" class="form-check">
+                            <!-- чекліст підгрузиться динамічно -->
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрити</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Bootstrap bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/create-topic.js"></script>
+
+</body>
+</html>

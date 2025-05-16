@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="uk">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Реєстрація за запрошенням</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+<main class="container my-4">
+    <h1 class="mb-4 text-center">✉️ Реєстрація за запрошенням</h1>
+
+    <form id="invite-form" class="bg-white p-4 rounded shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="mb-3">
+            <label for="firstName" class="form-label">Ім'я:</label>
+            <input type="text" class="form-control form-control-sm" id="firstName" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="lastName" class="form-label">Прізвище:</label>
+            <input type="text" class="form-control form-control-sm" id="lastName" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="patronymic" class="form-label">По батькові:</label>
+            <input type="text" class="form-control form-control-sm" id="patronymic" />
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Пароль:</label>
+            <input type="password" class="form-control form-control-sm" id="password" required />
+        </div>
+
+
+        <div class="mb-3 d-none" id="position-field">
+            <label for="position" class="form-label">Посада:</label>
+            <input type="text" class="form-control form-control-sm" id="position" />
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Зареєструватися</button>
+    </form>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/layout.js"></script>
+<script src="js/invite.js"> </script>
+</body>
+</html>

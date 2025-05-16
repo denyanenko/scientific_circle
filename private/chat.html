@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="uk" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <title>Чат</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="/socket.io/socket.io.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body, html {
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        #chatBox {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .message {
+            max-width: 70%;
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .own {
+            align-self: end;
+            background-color: #dcf8c6;
+            text-align: left;
+        }
+
+        .other {
+            align-self: start;
+            background-color: #ffffff;
+        }
+
+        .sender-name {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .timestamp {
+            font-size: 0.75em;
+            color: #888;
+            margin-top: 2px;
+            text-align: right;
+        }
+
+        #messageInput {
+            border-radius: 20px;
+        }
+
+        #sendBtn {
+            border-radius: 20px;
+        }
+
+        footer {
+            display: none;
+        }
+
+        .input-group {
+            position: sticky;
+            bottom: 0;
+            z-index: 1;
+            background-color: white;
+        }
+        #spinnerWrapper{
+            background-color: transparent;
+            position: absolute; top: 20px; left: 0; right: 0; bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+<main class="py-4 container-fluid h-100 d-flex flex-column justify-content-center align-items-center">
+    <div class="shadow rounded-4 overflow-hidden w-100"
+         style="max-width: 900px; height: 100vh; display: flex; flex-direction: column;">
+        <!-- Хедер -->
+        <div class="bg-primary text-white py-3 px-4 d-flex justify-content-between align-items-center">
+            <h4 id="chatTitle" class="mb-0">Назва чату</h4>
+        </div>
+
+        <!-- Основна частина -->
+        <div class="p-4 bg-white d-flex flex-column flex-grow-1" style="min-height: 0; position: relative;">
+
+            <div id="spinnerWrapper" class="text-center py-2 d-none">
+                <div class="spinner-border text-primary"></div>
+            </div>
+            <!-- Вікно повідомлень -->
+            <div id="chatBox" class="mb-3 d-flex flex-column-reverse flex-grow-1" style="min-height: 0;"></div>
+
+            <!-- Поле введення -->
+            <div class="input-group py-2">
+                <input type="text" id="messageInput" class="form-control me-2" placeholder="Напишіть повідомлення..."/>
+                <button id="sendBtn" class="btn btn-primary">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+<div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="userModalLabel">Інформація про користувача</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="userInfo">
+                <!-- Інформація буде тут -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/layout.js"></script>
+<script>
+    let userId = null;
+    const chatId = window.location.pathname.split('/').pop();
+    const userCache = {};
+    const chatBox = document.getElementById('chatBox');
+    const loadingSpinner = document.getElementById('spinnerWrapper');
+    loadingSpinner.classList.remove('d-none'); // Додаємо спінер до чату
+    let lastReadMessageTime = null;
+
+    let offset = 0;
+    const limit = 25;  // Кількість повідомлень для кожного запиту
+    let loading = false;
+    let noMoreMessages = false;
+    let initialLoadComplete = false;
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const messageId = entry.target.dataset.id;
+                const time= entry.target.dataset.time;
+                if (messageId) {
+                    markAsRead(messageId, time);
+                    if(initialLoadComplete) {
+                        observer.unobserve(entry.target); // Не спостерігати повторно
+                    }
+                }
+            }
+        });
+    }, {
+        root: chatBox,
+        threshold: 1.0 // Повністю видимий елемент
+    });
+
+    async function loadMessages() {
+        if (loading || noMoreMessages) return;
+        loading = true;
+        loadingSpinner.classList.remove('d-none');  // Показуємо спінер
+
+        try {
+            const response = await fetch(`/api/chat/${chatId}/messages?offset=${offset}&limit=${limit}`, {credentials: 'include'});
+            const { messages } = await response.json(); // Тепер отримуємо об'єкт з полем "messages"
+
+            if (messages.length === 0) {
+                noMoreMessages = true;
+                loadingSpinner.classList.add('d-none');  // Приховуємо спінер
+                return;
+            }
+
+            // Завантажуємо та додаємо нові повідомлення
+            for (let msg of messages) {
+                try {
+                    let user = userCache[msg.senderId];
+                    if (!user) {
+                        const res = await fetch(`/api/user/${msg.senderId}`, {credentials: 'include'});
+                        user = await res.json();
+                        userCache[msg.senderId] = user;
+                    }
+
+                    const isOwnMessage = msg.senderId === userId;
+                    const emoji = user.role === 'admin' ? '🛡️' :
+                        user.role === 'mentor' ? '🎓' : '';
+
+                    // Додаємо повідомлення до чату
+                    prependMessage({
+                        id: msg.id,
+                        senderId: msg.senderId,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        patronymic: user.patronymic,
+                        emoji,
+                        message: msg.message,
+                        role: user.role,
+                        additionalInfo: user.additionalInfo,
+                        time: msg.sentAt,
+                        own: isOwnMessage
+                    });
+                } catch (err) {
+                    console.error('Не вдалося отримати дані користувача для повідомлення:', err);
+                }
+            }
+
+            offset += limit;  // Збільшуємо offset на кількість завантажених повідомлень
+        } catch (err) {
+            console.error('Не вдалося завантажити повідомлення:', err);
+        } finally {
+            loading = false;
+            loadingSpinner.classList.add('d-none');  // Приховуємо спінер після завантаження
+        }
+    }
+
+    function appendMessage({id, senderId, firstName, lastName, patronymic, emoji, message, time, own, additionalInfo, role}) {
+        const fullName = `${lastName} ${firstName} ${patronymic || ''}`.trim();
+
+        const div = document.createElement('div');
+        div.className = `message ${own ? 'own' : 'other'}`;
+        div.dataset.id = id;
+        div.dataset.time = time;
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'sender-name';
+        nameDiv.innerHTML = `<span class="user-info" data-user-id="${senderId}" style="cursor:pointer;">${emoji} ${own ? 'Ви' : fullName}</span>`;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = message;
+
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'timestamp';
+        timeDiv.textContent = new Date(time).toLocaleTimeString(undefined, {
+            day: "numeric",
+            month: "long",
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        div.appendChild(nameDiv);
+        div.appendChild(messageDiv);
+        div.appendChild(timeDiv);
+
+        chatBox.prepend(div);  // Додаємо повідомлення в початок чату (при прокручуванні вгору)
+        nameDiv.querySelector('.user-info').addEventListener('click', () => {
+            showUserPopup(fullName, role, additionalInfo);
+        });
+        observer.observe(div);
+    }
+    function prependMessage({id, senderId, firstName, lastName, patronymic, emoji, message, time, own, additionalInfo, role}) {
+        const fullName = `${lastName} ${firstName} ${patronymic || ''}`.trim();
+
+        const div = document.createElement('div');
+        div.className = `message ${own ? 'own' : 'other'}`;
+        div.dataset.id = id;
+        div.dataset.time = time;
+
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'sender-name';
+        nameDiv.innerHTML = `<span class="user-info" data-user-id="${senderId}" style="cursor:pointer;">${emoji} ${own ? 'Ви' : fullName}</span>`;
+
+        const messageDiv = document.createElement('div');
+        messageDiv.textContent = message;
+
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'timestamp';
+        timeDiv.textContent = new Date(time).toLocaleTimeString(undefined, {
+            day: "numeric",
+            month: "long",
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        div.appendChild(nameDiv);
+        div.appendChild(messageDiv);
+        div.appendChild(timeDiv);
+
+        chatBox.append(div);  // Додаємо повідомлення в початок чату (при прокручуванні вгору)
+        nameDiv.querySelector('.user-info').addEventListener('click', () => {
+            showUserPopup(fullName, role, additionalInfo);
+        });
+        observer.observe(div);
+
+    }
+
+
+    fetch('/verifyAndRefresh', {method: 'POST', credentials: 'include'})
+        .then(res => res.json())
+        .then(data => {
+            if (!data.user || !data.user.id) {
+                showAlert("❌ Помилка авторизації. Ви будете перенаправлені на сторінку входу.");
+                window.location.href = "/login";
+                return;
+            }
+
+            userId = data.user.id;
+
+            const socket = io();
+
+            socket.on('connect', () => {
+                socket.emit('joinChat', chatId);
+            });
+
+            socket.on('errorMessage', (msg) => {
+                showAlert('❌ Помилка: ' + msg, "danger");
+            });
+
+            document.getElementById('sendBtn').addEventListener('click', sendMessage);
+            document.getElementById('messageInput').addEventListener('keypress', function (e) {
+                if (e.key === 'Enter') sendMessage();
+            });
+
+            function sendMessage() {
+                const message = document.getElementById('messageInput').value.trim();
+                if (message) {
+                    socket.emit('sendMessage', {chatId, message});
+                    document.getElementById('messageInput').value = '';
+                }
+            }
+
+            socket.on('newMessage', async ({id,senderId, message, sentAt}) => {
+                try {
+                    let user = userCache[senderId];
+                    if (!user) {
+                        const res = await fetch(`/api/user/${senderId}`, {credentials: 'include'});
+                        user = await res.json();
+                        userCache[senderId] = user;
+                    }
+
+                    const isOwnMessage = senderId === userId;
+                    const emoji = user.role === 'admin' ? '🛡️' :
+                        user.role === 'mentor' ? '🎓' : '';
+
+                    appendMessage({
+                        id,
+                        senderId,
+                        firstName: user.firstName,
+                        lastName: user.lastName,
+                        patronymic: user.patronymic,
+                        emoji,
+                        message,
+                        role: user.role,
+                        additionalInfo: user.additionalInfo,
+                        time: sentAt,
+                        own: isOwnMessage,
+
+                    });
+                    offset+=1;
+
+                } catch (err) {
+                    console.error('Не вдалося отримати дані користувача:', err);
+                }
+            });
+
+            fetch(`/api/chat/${chatId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.name) {
+                        document.getElementById('chatTitle').textContent = data.name;
+                    }
+                });
+        })
+        .catch(err => {
+            console.error('Помилка авторизації:', err);
+            showAlert("❌ Авторизація не вдалася. Перезайдіть.");
+        });
+
+    // Завантажуємо перші повідомлення
+    (async () => {
+        const unreadCount = await getUnreadCount();
+        const countToLoad = unreadCount + limit;
+        while (offset < countToLoad && !noMoreMessages) {
+            await loadMessages();
+        }
+
+        scrollToUnread(unreadCount);
+        initialLoadComplete = true;
+    })();
+
+    // Нескінченний скролл - під час прокручування вгору
+    chatBox.addEventListener('scroll', () => {
+        const scrollTop = chatBox.scrollTop;
+        const scrollHeight = chatBox.scrollHeight;
+        const clientHeight = chatBox.clientHeight;
+        const maxScrollTop = scrollHeight - 2*clientHeight;
+
+        const nearTop = -scrollTop >= maxScrollTop;
+        if (nearTop && !loading) {
+            loadMessages();
+        }
+    });
+    function showUserPopup(fullName, role, additionalInfo) {
+        let infoHtml = `<p><strong>ПІБ:</strong> ${fullName}</p>`;
+        infoHtml += `<p><strong>Роль:</strong> ${translateRole(role)}</p>`;
+
+        if (role === 'student' && additionalInfo?.studentGroup) {
+            infoHtml += `<p><strong>Група:</strong> ${additionalInfo.studentGroup}</p>`;
+        } else if (role === 'mentor' && additionalInfo?.position) {
+            infoHtml += `<p><strong>Посада:</strong> ${additionalInfo.position}</p>`;
+        }
+
+        const modalBody = document.getElementById('userInfo');
+        modalBody.innerHTML = infoHtml;
+
+        const modal = new bootstrap.Modal(document.getElementById('userModal'));
+        modal.show();
+    }
+
+    function translateRole(role) {
+        switch(role) {
+            case 'student': return 'Студент';
+            case 'mentor': return 'Ментор';
+            case 'admin': return 'Адміністратор';
+            default: return role;
+        }
+    }
+    async function getUnreadCount() {
+        try {
+            const response = await fetch(`/api/chat/${chatId}/unread-count`, { credentials: 'include' });
+            const data = await response.json();
+            return data.unreadCount || 0;
+        } catch (err) {
+            console.error('Помилка при отриманні unreadCount:', err);
+            return 0;
+        }
+    }
+    function scrollToUnread(unreadCount) {
+        const messages = chatBox.querySelectorAll('.message');
+            const targetIndex = unreadCount - 1;
+            messages[targetIndex]?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    }
+    function markAsRead(messageId, sentAt) {
+        if (!initialLoadComplete || lastReadMessageTime && sentAt <= lastReadMessageTime) return;
+        fetch(`/api/chat/${chatId}/messages/last-read`, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ messageId })
+        }).catch(err => console.error("❌ Не вдалося позначити як прочитане:", err));
+
+        lastReadMessageTime = sentAt;
+    }
+
+</script>
+</body>
+</html>

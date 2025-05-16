@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Подача заявки на вступ</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<main class="container my-4">
+    <h1 class="mb-4 text-center">📑 Подача заявки на вступ</h1>
+
+    <form id="application-form" class="bg-white p-3 rounded shadow-sm mx-auto" style="max-width: 600px;">
+        <div class="mb-3">
+            <label for="firstName" class="form-label">Ім'я:</label>
+            <input type="text" class="form-control form-control-sm" name="firstName" id="firstName" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="lastName" class="form-label">Прізвище:</label>
+            <input type="text" class="form-control form-control-sm" name="lastName" id="lastName" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="patronymic" class="form-label">По батькові:</label>
+            <input type="text" class="form-control form-control-sm" name="patronymic" id="patronymic" />
+        </div>
+
+        <div class="mb-3">
+            <label for="email" class="form-label">Email:</label>
+            <input type="email" class="form-control form-control-sm" name="email" id="email" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="password" class="form-label">Пароль:</label>
+            <input type="password" class="form-control form-control-sm" name="password" id="password" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="studentGroup" class="form-label">Група:</label>
+            <input type="text" class="form-control form-control-sm" name="studentGroup" id="studentGroup" required />
+        </div>
+
+        <div class="mb-3">
+            <label for="applicationText" class="form-label">Текст заявки:</label>
+            <textarea class="form-control form-control-sm" name="applicationText" id="applicationText" rows="3" required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Надіслати заявку</button>
+    </form>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/apply.js"></script>
+<script src="js/layout.js"></script>
+</body>
+</html>

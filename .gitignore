@@ -1,0 +1,9 @@
+
+.idea
+*.iml
+out
+gen
+
+.env
+/node_modules/
+/public/uploads/

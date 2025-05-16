@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Профіль</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+<main class="container my-5">
+    <h1 class="text-center mb-4">👤 Профіль користувача</h1>
+
+    <div id="profile-card" class="bg-white p-4 rounded shadow-sm mx-auto" style="max-width: 600px;">
+        <p><strong>Ім'я:</strong> <span id="firstName"></span></p>
+        <p><strong>Прізвище:</strong> <span id="lastName"></span></p>
+        <p><strong>По батькові:</strong> <span id="patronymic"></span></p>
+        <p><strong>Електронна пошта:</strong> <span id="email"></span></p>
+        <p><strong>Роль:</strong> <span id="role"></span></p>
+        <div id="additional-info"></div>
+        <hr />
+        <h5>Зміна даних</h5>
+        <button class="btn btn-outline-primary mb-2 w-100" id="change-email-btn">Змінити пошту</button>
+        <button class="btn btn-outline-warning w-100" id="change-password-btn">Змінити пароль</button>
+
+        <hr />
+        <button class="btn btn-outline-danger mt-3 w-100" id="delete-account-btn">Видалити акаунт</button>
+    </div>
+    <div class="modal fade" id="changeEmailModal" tabindex="-1" aria-labelledby="changeEmailModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changeEmailModalLabel">Змінити електронну пошту</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="password" id="password" class="form-control mb-2" placeholder="Пароль" />
+                    <input type="email" id="newEmailInput" class="form-control" placeholder="Нова електронна пошта" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="button" class="btn btn-primary" id="saveEmailBtn">Зберегти</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно для зміни пароля -->
+    <div class="modal fade" id="changePasswordModal" tabindex="-1" aria-labelledby="changePasswordModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="changePasswordModalLabel">Змінити пароль</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="password" id="oldPasswordInput" class="form-control mb-2" placeholder="Старий пароль" />
+                    <input type="password" id="newPasswordInput" class="form-control" placeholder="Новий пароль" />
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="button" class="btn btn-warning" id="savePasswordBtn">Зберегти</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-labelledby="deleteAccountModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteAccountModalLabel">Підтвердження видалення акаунту</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Ви впевнені, що хочете видалити акаунт? Цю дію не можна буде скасувати.</p>
+                    <input type="password" class="form-control mt-3" id="deletePasswordInput" placeholder="Введіть пароль для підтвердження">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Скасувати</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Видалити</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="/js/layout.js"></script>
+<script src="/js/profile.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Модальне вікно для зміни пошти -->
+
+
+</body>
+</html>
+>

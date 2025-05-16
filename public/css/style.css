@@ -1,0 +1,136 @@
+/* === Кнопка === */
+main button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+main button:hover {
+    background-color: #45a049;
+}
+
+/* === Заголовки === */
+h1, h2, h3 {
+    text-align: center;
+}
+
+h3 {
+    margin-bottom: 10px;
+}
+
+/* === Списки === */
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+ul li {
+    margin: 5px 0;
+}
+
+/* === Основні секції === */
+.criteria-section,
+.matrix-section,
+#result-section {
+    margin-top: 20px;
+    border-top: 1px solid #ccc;
+    padding-top: 15px;
+}
+
+/* === Форма критеріїв === */
+#criteria-form > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+#criteria-form label {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Інпути в формі критеріїв */
+.criterion-name {
+    flex: 1 1 200px;
+    min-width: 150px;
+}
+
+.criterion-weight,
+.criterion-optimization {
+    flex: 0 0 auto;
+    min-width: 70px;
+}
+
+.remove-criterion {
+    flex: 0 0 auto;
+}
+
+/* === Інпути === */
+.criteria-section input[type="number"] {
+    padding: 5px;
+}
+
+input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+/* === Таблиця та контейнер === */
+.matrix-table-container {
+    display: flex;
+    justify-content: flex-start;
+    overflow-x: auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#matrix-table {
+    border-collapse: collapse;
+    width: auto;
+    table-layout: auto;
+    white-space: normal;
+    margin: 0 auto;
+    min-width: max-content;
+
+}
+
+#matrix-table th,
+#matrix-table td {
+    padding: 8px;
+    text-align: center;
+    border: 1px solid #ddd;
+}
+
+#matrix-table th {
+    background-color: #f2f2f2;
+}
+
+#matrix-table td:first-child,
+#matrix-table th:first-child {
+    text-align: left;
+    white-space: normal;
+    word-break: break-word;
+    min-width: 200px;
+    max-width: 300px;
+    background-color: #f9f9f9;
+    padding-left: 10px;
+}
+
+/* === Інпути в таблиці === */
+.matrix-input {
+    width: 70px;
+    text-align: center;
+}
+
+/* === Прихований блок === */
+#topic-selection {
+    display: none;
+}
