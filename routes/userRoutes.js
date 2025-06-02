@@ -141,32 +141,7 @@ router.get('/api/mentors/name', async (req, res) => {
     }
 });
 
-router.get('/mentors-for-topic/:topicId', async (req, res) => {
-    const { topicId } = req.params;
 
-    try {
-        const topic = await Topic.findByPk(topicId, { attributes: ['id'] });
-        if (!topic) {
-            return res.status(404).json({ error: 'Гурток не знайдено' });
-        }
-
-        const fullNameLiteral = literal(`CONCAT("last_name", ' ', "first_name", ' ', COALESCE("patronymic", ''))`);
-        const mentors = await topic.getUsers({
-            where: { role: 'mentor' },
-            attributes: [
-                'id',
-                [fullNameLiteral, 'name']
-            ],
-            joinTableAttributes: [],
-            order: [[fullNameLiteral, 'ASC']]
-        });
-
-        res.json(mentors);
-    } catch (err) {
-        console.error('Помилка при отриманні менторів:', err);
-        res.status(500).json({ error: 'Помилка при отриманні менторів з бази даних' });
-    }
-});
 
 router.get('/api/user/:id', verifyToken, async (req, res) => {
     const { id } = req.params;

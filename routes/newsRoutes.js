@@ -4,7 +4,9 @@ const {News} = require('../models')
 const path = require("path");
 const {verifyAdminToken, verifyToken, verifyMentorOrAdmin} = require('../utils/jwt');
 const multer = require('multer');
-const {writeFileSync, existsSync, mkdirSync} = require("node:fs");
+const {existsSync, mkdirSync} = require("node:fs");
+const {extractImagePaths, deleteFileFS}= require('../utils/fileUtils');
+const {manageNewsAccessApi, manageNewsAccessHtml} = require('../utils/manageNewsAccess');
 
 // Створити папку uploads, якщо її нема
 const uploadPath = path.join(__dirname, '..', 'public', 'uploads');
@@ -40,8 +42,16 @@ router.get('/news', function (req, res) {
     });
 });
 
+router.get('/manage-news', verifyMentorOrAdmin, function (req, res) {
+    res.sendFile(path.join(__dirname, '..', 'private', 'manage-news.html'), (err) => {
+        if(err){
+            res.status(500).send("Internal server error");
+        }
+    });
+});
 
-router.post('/save-article', verifyToken, upload.single('coverImage'), async (req, res) => {
+
+router.post('/save-article', verifyMentorOrAdmin, upload.single('coverImage'), async (req, res) => {
     try {
         let { title, contentHtml } = req.body;
         const authorId = req.user.id;
@@ -64,12 +74,12 @@ router.post('/save-article', verifyToken, upload.single('coverImage'), async (re
 });
 
 
-router.post('/upload-image', upload.single('image'), (req, res) => {
+router.post('/upload-image', verifyToken, upload.single('image'), (req, res) => {
     if (!req.file) {
         return res.status(400).json({ message: 'Файл не було завантажено' });
     }
 
-    const fileUrl = `/uploads/${req.file.filename}`; // Шлях, який потім підставляєш в <img src="">
+    const fileUrl = `/uploads/${req.file.filename}`; // Шлях, в <img src="">
     res.status(200).json({ url: fileUrl });
 });
 
@@ -80,6 +90,7 @@ router.get('/api/news', async (req, res) => {
         const offset = parseInt(req.query.offset) || 0;
 
         const news = await News.findAll({
+            attributes: ['id', 'title', 'coverImage', 'createdAt', 'authorId'],
             order: [['createdAt', 'DESC']],
             limit,
             offset
@@ -92,6 +103,38 @@ router.get('/api/news', async (req, res) => {
     }
 });
 
+router.get('/api/news/editable', verifyMentorOrAdmin, async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = parseInt(req.query.offset) || 0;
+
+        const userId = req.user.id;
+        const userRole = req.user.role;
+
+        let queryOptions = {
+            attributes: ['id', 'title', 'coverImage', 'createdAt', 'authorId'],
+            order: [['createdAt', 'DESC']],
+            limit,
+            offset
+        };
+
+        // Якщо користувач - ментор, він бачить тільки свої новини
+        if (userRole === 'mentor') {
+            queryOptions.where = {
+                authorId: userId
+            };
+        }
+
+        const news = await News.findAll(queryOptions);
+
+        res.json(news);
+
+    } catch (err) {
+        console.error('Помилка при завантаженні новин для редагування:', err.message);
+        res.status(500).json({ message: 'Помилка сервера при завантаженні новин для редагування' });
+    }
+});
+
 router.get('/news/:id', function (req, res) {
     res.sendFile(path.join(__dirname, '..', 'public', 'news-content.html'), (err) => {
         if(err){
@@ -99,14 +142,12 @@ router.get('/news/:id', function (req, res) {
         }
     });
 });
-// Отримати тільки title і contentHtml конкретної новини
+
 router.get('/api/news/:id', async (req, res) => {
     const newsId = req.params.id;
 
     try {
-        const article = await News.findByPk(newsId, {
-            attributes: ['title', 'contentHtml']
-        });
+        const article = await News.findByPk(newsId);
 
         if (!article) {
             return res.status(404).json({ message: 'Новина не знайдена' });
@@ -116,6 +157,103 @@ router.get('/api/news/:id', async (req, res) => {
     } catch (err) {
         console.error('Помилка при завантаженні новини:', err);
         res.status(500).json({ message: 'Помилка сервера' });
+    }
+});
+
+router.get('/news/edit/:id', manageNewsAccessHtml,function (req, res) {
+    res.sendFile(path.join(__dirname, '..', 'private', 'edit-news.html'), (err) => {
+        if(err){
+            res.status(500).send("Internal server error");
+        }
+    });
+});
+
+router.put('/api/news/:id', manageNewsAccessApi,
+    upload.single('coverImage'),
+    async (req, res) => {
+        const newsId = req.params.id;
+        const { title, contentHtml } = req.body;
+        const article = req.article;
+
+        try {
+            const currentCoverImagePath = article.coverImage; // Зберігаємо шлях до поточної обкладинки
+            let newCoverImagePath = currentCoverImagePath;     // За замовчуванням залишаємо стару обкладинку
+
+            const fieldsToUpdate = {};
+
+            // 1. Обробка нової обкладинки (якщо завантажено)
+            if (req.file) {
+                newCoverImagePath = `/uploads/${req.file.filename}`;
+                fieldsToUpdate.coverImage = newCoverImagePath;
+                await deleteFileFS(currentCoverImagePath);
+
+            }
+
+            // 2. Обробка заголовка (якщо надійшов і відрізняється)
+            if (title !== undefined && title !== article.title) {
+                fieldsToUpdate.title = title;
+            }
+
+            // 3. Обробка контенту та пов'язаних зображень (якщо надійшов і відрізняється)
+            if (contentHtml !== undefined && contentHtml !== article.contentHtml) {
+                fieldsToUpdate.contentHtml = contentHtml; // Новий HTML-контент
+
+                const oldContentImagePaths = extractImagePaths(article.contentHtml); // Зображення зі старого контенту в БД
+                const newContentImagePaths = extractImagePaths(contentHtml);         // Зображення з нового контенту з запиту
+
+                // Видаляємо зображення, які були в старому контенті, але немає в новому.
+                for (const oldPath of oldContentImagePaths) {
+                    if (!newContentImagePaths.has(oldPath)) {
+                        await deleteFileFS(oldPath);
+                    }
+                }
+            }
+
+            // Оновлюємо тільки якщо є що оновлювати
+            if (Object.keys(fieldsToUpdate).length > 0) {
+               await article.update(fieldsToUpdate);
+            }
+
+            const updatedArticle = await News.findByPk(newsId); // Перечитуємо для актуальних даних
+
+            res.json({ message: 'Новину успішно оновлено', article: updatedArticle });
+
+        } catch (error) {
+            console.error('Помилка при оновленні новини:', error);
+            // Якщо нова обкладинка була завантажена multer'ом, але сталася помилка далі,
+            // варто спробувати видалити цей щойно завантажений файл, щоб не залишати сміття.
+            if (req.file) {
+                await deleteFileFS(`/uploads/${req.file.filename}`);
+            }
+            res.status(500).json({ message: 'Помилка сервера при оновленні новини' });
+        }
+    }
+);
+
+router.delete('/api/news/:id', manageNewsAccessApi, async (req, res) => {
+    const article = req.article;
+
+    try {
+        // Видалення обкладинки
+        if (article.coverImage) {
+            await deleteFileFS(article.coverImage);
+        }
+
+        // Видалення зображень зі статті
+        if (article.contentHtml) {
+            const contentImagePaths = extractImagePaths(article.contentHtml); // Отримуємо Set відносних шляхів
+            await Promise.all(
+                Array.from(contentImagePaths).map(relativePath => deleteFileFS(relativePath))
+            );
+        }
+
+        // Видаляємо з бази
+        await article.destroy();
+
+        res.status(200).json({ message: 'Новина успішно видалена' });
+    } catch (err) {
+        console.error('Помилка при видаленні новини:', err);
+        res.status(500).json({ message: 'Помилка сервера при видаленні новини' });
     }
 });
 

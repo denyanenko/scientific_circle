@@ -15,7 +15,10 @@ async function loadNews() {
         const news = await response.json();
 
         if (news.length === 0) {
-            noMoreNews = true; // <-- якщо нічого не прийшло, більше не вантажимо
+            if (offset === 0) {
+                noNewsMessage.classList.remove('d-none'); // Показати повідомлення
+            }
+            noMoreNews = true;
             loadingSpinner.classList.add('d-none');
             return;
         }

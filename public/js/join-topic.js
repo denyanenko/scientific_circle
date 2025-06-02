@@ -21,7 +21,7 @@ async function loadTopics() {
         const topics = await response.json();
         // Завантажити менторів для кожної теми
         const topicsWithMentors = await Promise.all(topics.map(async (topic) => {
-            const mentorsResponse = await fetch(`/mentors-for-topic/${topic.id}`, { credentials: 'include' });
+            const mentorsResponse = await fetch(`/api/topics/${topic.id}/mentors `, { credentials: 'include' });
             const mentors = await mentorsResponse.json();
             return {
                 ...topic,
@@ -45,6 +45,7 @@ function updateTopicsList() {
     if (topicsListCache.length === 0) {
         const message = document.createElement('p');
         message.textContent = "Наразі немає доступних гуртків для вступу.";
+        message.classList.add('text-center', 'text-secondary', 'mt-5', 'fs-4', 'fw-semibold');
         topicsListElement.appendChild(message);
         return;
     }

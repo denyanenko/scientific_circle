@@ -16,6 +16,5 @@ fetch(`/api/news/${id}`)
         document.getElementById('news-content').innerHTML = news.contentHtml;
     })
     .catch(err => {
-        // Тут можна залишити порожньо або щось для дебагу
         console.warn(err.message);
     });

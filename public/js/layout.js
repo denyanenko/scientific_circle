@@ -116,16 +116,15 @@ function renderUserMenu() {
             if (data.user.role === 'admin') {
                 menuItems += `<li><a class="dropdown-item" href="/my-chats">Мої чати</a></li>`;
                 menuItems += `<li><a class="dropdown-item" href="/applications/manage">Заявки на вступ</a></li>`;
-                menuItems += `<li><a class="dropdown-item" href="/create-news">Створити новину</a></li>`;
-                menuItems += `<li><a class="dropdown-item" href="/create-topic">Створити гурток</a></li>`;
+                menuItems += `<li><a class="dropdown-item" href="/manage-news">Керувати новинами</a></li>`;
+                menuItems += `<li><a class="dropdown-item" href="/manage-topics">Керувати гуртками</a></li>`;
                 menuItems += `<li><a class="dropdown-item" href="/send-invite">Надіслати запрошення</a></li>`;
-                menuItems += `<li><a class="dropdown-item" href="/join-topic">Вступити в гурток</a></li>`;
             }
             else if (data.user.role === 'mentor') {
                 menuItems += `<li><a class="dropdown-item" href="/my-topics">Мої гуртки</a></li>`;
                 menuItems += `<li><a class="dropdown-item" href="/my-chats">Мої чати</a></li>`;
-                menuItems += `<li><a class="dropdown-item" href="/create-news">Створити новину</a></li>`;
-                menuItems += `<li><a class="dropdown-item" href="/create-topic">Створити гурток</a></li>`;
+                menuItems += `<li><a class="dropdown-item" href="/manage-news">Керувати новинами</a></li>`;
+                menuItems += `<li><a class="dropdown-item" href="/manage-topics">Керувати гуртками</a></li>`;
                 menuItems += `<li><a class="dropdown-item" href="/join-topic">Вступити в гурток</a></li>`;
 
             }
